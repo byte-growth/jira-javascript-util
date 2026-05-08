@@ -11,7 +11,7 @@ De bookmarklet slaat config op in `localStorage` onder de sleutel `__jst_config`
 
 ## Oplossing
 
-Config wordt per persoon opgeslagen als JSON-bestand in deze publieke GitHub-repo (`byte-growth/jira-javascript-util`). De bookmarklet haalt de config op via de raw GitHub URL bij elke opstart. Elke collega heeft zijn eigen bestand en zijn eigen bookmarklet-variant met die URL hardcoded.
+Config wordt per persoon opgeslagen als JSON-bestand in de `storage/` map van deze publieke GitHub-repo (`byte-growth/jira-javascript-util`). De bookmarklet is voor iedereen identiek — geen naam hardcoded. Bij opstarten haalt de bookmarklet de lijst van beschikbare profielen op via de GitHub Contents API en toont een profielpicker. Na het kiezen wordt de config opgehaald en opgeslagen in `localStorage` als sessiecache.
 
 ---
 
@@ -43,56 +43,69 @@ Bestandsformaat is ongewijzigd:
 
 ## Bookmarklet gedrag
 
-### Opstarten
+### Opstarten — profielpicker
 
-1. Bookmarklet bevat een hardcoded `CONFIG_URL` per persoon:  
-   `https://raw.githubusercontent.com/byte-growth/jira-javascript-util/main/storage/<naam>.json`
-2. Bij elke opstart wordt `fetch(CONFIG_URL)` aangeroepen.
-3. Bij succes: response wordt geparsed en opgeslagen in `localStorage` als sessiecache.
-4. Bij mislukking (netwerk, offline): fallback naar bestaande `localStorage`-waarde als die aanwezig is.
-5. Als beide falen: config-editor wordt geopend (bestaand gedrag).
+Wanneer `localStorage` leeg is (nieuwe Citrix-sessie):
 
-### Config aanpassen
+1. Roep de GitHub Contents API aan:  
+   `https://api.github.com/repos/byte-growth/jira-javascript-util/contents/storage`
+2. Filter de response op `*.json` bestanden en haal namen en `download_url` op.
+3. Toon een **profielpicker**: dropdown met alle namen (zonder `.json`) + "Laden" knop.
+4. Gebruiker kiest naam → fetch de bijbehorende `download_url` → parse config → sla op in `localStorage` (sleutel `__jst_config` en `__jst_profile`).
+5. Open het hoofdscherm.
 
-Wijzigingen worden aangebracht door het eigen JSON-bestand in de repo te bewerken en te committen (via GitHub webinterface of git). De volgende sessie pikt de bookmarklet de nieuwe config automatisch op.
+Wanneer `localStorage` al een config heeft (zelfde sessie, bookmarklet opnieuw gestart):
 
-De bestaande config-editor (knop "Config" in de UI) blijft werken voor tijdelijke wijzigingen binnen de sessie. Deze wijzigingen worden alleen naar `localStorage` geschreven, niet naar GitHub.
+1. Sla de profielpicker over.
+2. Open direct het hoofdscherm met de config uit `localStorage`.
 
 ### Fallback volgorde
 
 ```
-fetch(CONFIG_URL) geslaagd  →  gebruik remote config  →  sla op in localStorage
-fetch(CONFIG_URL) mislukt   →  gebruik localStorage indien aanwezig
-beide leeg                  →  open config-editor
+localStorage heeft config   →  gebruik localStorage  (zelfde sessie)
+localStorage leeg           →  probeer GitHub URL
+  GitHub geslaagd           →  gebruik remote config, sla op in localStorage
+  GitHub mislukt            →  gebruik localStorage indien aanwezig
+  beide leeg/mislukt        →  open config-editor met standaard voorbeeldconfig
 ```
+
+De config-editor met standaard voorbeeldconfig is het bestaande gedrag: een bewerkbaar JSON-veld met een complete voorbeeldstructuur, zonder dat er al een profiel bestaat. Dit gedrag blijft ongewijzigd.
+
+### Config aanpassen
+
+Wijzigingen worden aangebracht door het eigen JSON-bestand in de repo te bewerken en te committen (via GitHub webinterface of git). De volgende Citrix-sessie (nieuwe `localStorage`) pikt de bookmarklet de nieuwe config automatisch op via de profielpicker.
+
+De bestaande config-editor (knop "Config" in de UI) blijft werken voor tijdelijke wijzigingen binnen de sessie. Deze wijzigingen worden alleen naar `localStorage` geschreven, niet naar GitHub.
 
 ---
 
-## Per-persoon bookmarklet
+## Profielpicker UI
 
-Elke collega heeft een eigen bladwijzer-variant met hun URL:
+Een nieuw scherm (zelfde overlay-stijl als de bestaande editor):
 
-```
-javascript:(function(){var CONFIG_URL='https://raw.githubusercontent.com/byte-growth/jira-javascript-util/main/storage/rick.json';...})()
-```
-
-De rest van de bookmarklet-code is identiek. Instellen: eenmalig de bladwijzer aanmaken met de eigen URL. Als bladwijzers ook worden gewist in Citrix, kan het `.js`-bestand op de P-schijf worden bewaard en eenmalig per sessie als bladwijzer worden toegevoegd.
+- Titel: "Kies jouw profiel"
+- Dropdown met namen van alle gevonden `.json` bestanden in `storage/`
+- Knop "Laden"
+- Knop "Annuleren" (sluit de overlay)
+- Als de GitHub API niet bereikbaar is: toon melding "Kon profielen niet ophalen" en ga verder met lokale config of editor
 
 ---
 
 ## Wat verandert er niet
 
 - Jira API-integratie
-- UI en alle teksten
+- UI en alle teksten van het hoofdscherm
 - Config-editor voor lokale/tijdelijke wijzigingen
 - Gedrag na het aanmaken van subtaken
+- Eén identieke bookmarklet voor iedereen
 
 ---
 
 ## Wat er geïmplementeerd moet worden
 
 1. Map `storage/` aanmaken in de repo met een voorbeeldbestand (`rick.json`).
-2. In de bookmarklet: `CONFIG_URL` constante toevoegen bovenaan de IIFE.
-3. Opstartlogica aanpassen: eerst `fetch(CONFIG_URL)`, dan pas `getConfig()` (localStorage), dan editor.
-4. Na succesvolle fetch: resultaat via `saveConfig()` in localStorage opslaan.
-5. Foutafhandeling: fetch-fouten stille fallback, geen zichtbare foutmelding tenzij alles ontbreekt.
+2. Opstartlogica aanpassen: check localStorage → zo niet, haal profiellijst op via GitHub Contents API.
+3. Profielpicker UI bouwen (nieuw scherm in de bestaande overlay-stijl).
+4. Na keuze: fetch config van `download_url`, sla op via `saveConfig()` in localStorage.
+5. Foutafhandeling: GitHub API-fout → stille fallback naar localStorage of editor, geen harde foutmelding.
+6. Bestaande config-editor en hoofdscherm ongewijzigd laten.
