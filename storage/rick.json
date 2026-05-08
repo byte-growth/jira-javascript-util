@@ -1,6 +1,39 @@
 {
   "teams": {
-    "Team A": {
+    "Platform": {
+      "Refine": [
+        "- Beschrijf probleem",
+        "- Beschrijf oorzaak",
+        "- Kom met oplossing (technishe aanpak)",
+        "- Pitch aan team"
+      ],
+      "Emma_Module_ODC": [
+        "- Toevoegen aan ODC environments",
+        "- Pipeline inrichting",
+        "- Liquibase setup",
+        "- Inrichten Database",
+        "- Toevoegen aan AMQ Broker",
+        "- Toevoegen secrets",
+        "- QA / testen"
+      ],
+      "Emma_Module_DHC_OT": [
+        "- Toevoegen aan DHC environments",
+        "- Kargo inrichten",
+        "- Liquibase infra setup",
+        "- Inrichten Database",
+        "- Toevoegen aan AMQ Broker",
+        "- Toevoegen secrets",
+        "- QA / testen"
+      ],
+      "Emma_Module_DHC_A_P": [
+        "- Database aanvragen A & P",
+        "- Toevoegen aan DHC environments",
+        "- Kargo inrichten",
+        "- Liquibase infra setup",
+        "- Toevoegen aan AMQ Broker",
+        "- Toevoegen secrets",
+        "- QA / testen"
+      ],
       "Story": [
         "- Technische analyse",
         "- Implementatie",

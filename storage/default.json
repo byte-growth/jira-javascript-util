@@ -1,0 +1,18 @@
+{
+  "teams": {
+    "Team A": {
+      "Story": [
+        "- Technische analyse",
+        "- Implementatie",
+        "- Code review",
+        "- QA / testen"
+      ],
+      "Defect": [
+        "- Reproduceren",
+        "- Oorzaakanalyse",
+        "- Fix implementeren",
+        "- Regressietest"
+      ]
+    }
+  }
+}
